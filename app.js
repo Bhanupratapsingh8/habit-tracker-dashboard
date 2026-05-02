@@ -1,6 +1,7 @@
 // ===== AUTH & STATE MANAGEMENT =====
 const USERS_KEY = 'habit_tracker_users';
 const SESSION_KEY = 'habit_tracker_session';
+const REMEMBER_KEY = 'habit_tracker_remember';
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAYS_SHORT = ['Su','Mo','Tu','We','Th','Fr','Sa'];
 
@@ -48,6 +49,28 @@ function getUserDataKey(username) {
     return `habit_data_${username}`;
 }
 
+// ===== REMEMBER ME =====
+function saveRemembered(username, password) {
+    const rememberMe = document.getElementById('remember-me').checked;
+    if (rememberMe) {
+        localStorage.setItem(REMEMBER_KEY, JSON.stringify({ username, password }));
+    } else {
+        localStorage.removeItem(REMEMBER_KEY);
+    }
+}
+
+function loadRemembered() {
+    try {
+        const saved = localStorage.getItem(REMEMBER_KEY);
+        if (saved) {
+            const { username, password } = JSON.parse(saved);
+            document.getElementById('auth-username').value = username || '';
+            document.getElementById('auth-password').value = password || '';
+            document.getElementById('remember-me').checked = true;
+        }
+    } catch {}
+}
+
 // ===== AUTH LOGIC =====
 function switchAuthTab(mode) {
     authMode = mode;
@@ -55,6 +78,8 @@ function switchAuthTab(mode) {
     document.getElementById('tab-register').classList.toggle('active', mode === 'register');
     document.getElementById('auth-submit').textContent = mode === 'login' ? 'Sign In' : 'Create Account';
     document.getElementById('auth-error').textContent = '';
+    // Auto-fill saved credentials when switching to login tab
+    if (mode === 'login') loadRemembered();
 }
 
 function handleAuth() {
@@ -84,6 +109,7 @@ function handleAuth() {
         // Initialize with default habits for new user
         const dataKey = getUserDataKey(username);
         localStorage.setItem(dataKey, JSON.stringify({ habits: DEFAULT_HABITS.map(h => ({...h})), checks: {} }));
+        saveRemembered(username, password);
         loginUser(username);
     } else {
         if (!users[username]) {
@@ -94,6 +120,7 @@ function handleAuth() {
             errorEl.textContent = 'Incorrect password. Try again.';
             return;
         }
+        saveRemembered(username, password);
         loginUser(username);
     }
 }
@@ -130,6 +157,7 @@ function hideDashboard() {
     document.getElementById('app-header').classList.remove('visible');
     document.getElementById('main-content').classList.remove('visible');
     switchAuthTab('login');
+    loadRemembered();
 }
 
 // ===== PARTICLES =====
