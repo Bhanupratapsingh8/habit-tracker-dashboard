@@ -1,12 +1,21 @@
-# 🌟 Habit Tracker Dashboard
+# 🌟 Habit Tracker Dashboard (With Login System)
 
-A modern and interactive **Habit Tracker Dashboard** designed to help users track daily habits, analyze progress, and stay consistent.
+A modern and interactive Habit Tracker Dashboard designed to help users track daily habits, analyze progress, and stay consistent with a built-in **username/password login system** and **auto-saving habit data per user**.
 
 ---
 
 ## 🚀 Live Demo
 
-🔗 https://habit-tracker-dashboard-cv55.onrender.com
+🔗 https://your-username.github.io/habit-tracker-dashboard/
+
+---
+
+## 🔐 Authentication System
+
+* Simple **Username & Password Login**
+* No Gmail or external authentication required
+* Each user has their **own saved data**
+* Data persists even after refresh or reopening
 
 ---
 
@@ -14,44 +23,45 @@ A modern and interactive **Habit Tracker Dashboard** designed to help users trac
 
 * 🎯 **Overall Progress Tracker**
 
-  * Monthly completion percentage
+  * Monthly completion %
   * Animated progress ring & bar
 
 * 📊 **Weekly Overview**
 
   * 6-week cards with donut charts
-  * Visual performance tracking
 
 * 📋 **Habit Calendar Grid**
 
-  * Full monthly calendar
-  * Clickable daily checkboxes
+  * Clickable daily tracking
 
 * ➕ **Habit Management**
 
-  * Add new habits
-  * Edit existing habits
-  * Delete habits
+  * Add / Edit / Delete habits
   * Emoji support 🎉
 
 * 📈 **Analysis Section**
 
-  * Goal vs Actual comparison
-  * Color-coded performance (Green / Orange / Red)
+  * Goal vs Actual tracking
+  * Color-coded progress
 
 * 📅 **Month Navigation**
 
-  * Easily switch between months
+  * Switch between months easily
 
-* 💾 **Auto Save**
+* 💾 **Auto Save (User-Based)**
 
-  * Data stored using browser localStorage
+  * Data saved per user using localStorage
+  * No data loss after refresh
+
+* 🔐 **Login System**
+
+  * Secure session-like experience (frontend-based)
+  * User-specific habit tracking
 
 * 🎨 **Modern UI**
 
-  * Premium dark theme
-  * Glassmorphism design
-  * Smooth animations & hover effects
+  * Dark theme + glassmorphism
+  * Smooth animations
 
 ---
 
@@ -60,67 +70,79 @@ A modern and interactive **Habit Tracker Dashboard** designed to help users trac
 * HTML5
 * CSS3
 * JavaScript (Vanilla JS)
-* LocalStorage (for data persistence)
+* LocalStorage (User-based persistence)
 
 ---
 
 ## 📁 Project Structure
 
-```
+```text
 habit-tracker-dashboard/
 │── index.html
 │── index.css
 │── app.js
+│── login.js (new)
+│── auth.js (new)
+```
+
+---
+
+## ⚙️ How It Works
+
+1. User signs up with username & password
+2. Credentials stored in localStorage
+3. On login:
+
+   * User session is created
+   * Unique key is used to store habits
+4. Data is saved like:
+
+```js
+habit_data_username
+```
+
+👉 Example:
+
+```js
+habit_data_bhanu
 ```
 
 ---
 
 ## ⚙️ How to Run Locally
 
-1. Download or clone the repository
+1. Clone/download repo
 2. Open folder
-3. Double click `index.html`
-
-OR use Live Server:
-
-```
-Right click → Open with Live Server
-```
+3. Open `index.html`
 
 ---
 
 ## 📸 Screenshots
 
-(Add screenshots here later for better presentation)
+(Add login screen + dashboard screenshots here)
 
 ---
 
 ## ⚠️ Limitations
 
-* Data is stored in **localStorage**
-* Not synced across devices
-* No authentication system
+* Authentication is **frontend-based (not secure for production)**
+* Data stored only in browser (localStorage)
+* No cloud sync
 
 ---
 
 ## 🔮 Future Improvements
 
-* 🔐 User authentication (login/signup)
-* ☁️ Cloud database integration (Firebase / Supabase)
-* 📱 Mobile responsiveness improvements
-* 📊 Advanced analytics
+* 🔐 Real authentication (JWT / Firebase)
+* ☁️ Cloud database (Firestore / Supabase)
+* 📱 Mobile optimization
+* 👥 Multi-device sync
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Feel free to fork this repo and submit a pull request.
-
----
-
-## 📄 License
-
-This project is open-source and available under the MIT License.
+Open for contributions 🚀
 
 ---
 
