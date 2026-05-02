@@ -1,5 +1,6 @@
-// ===== STATE MANAGEMENT =====
-const STORAGE_KEY = 'habit_tracker_data';
+// ===== AUTH & STATE MANAGEMENT =====
+const USERS_KEY = 'habit_tracker_users';
+const SESSION_KEY = 'habit_tracker_session';
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAYS_SHORT = ['Su','Mo','Tu','We','Th','Fr','Sa'];
 
@@ -12,38 +13,173 @@ const DEFAULT_HABITS = [
     { id: 'h6', name: 'Budget Tracking', emoji: '💰' },
 ];
 
+let currentUser = null;
+let authMode = 'login'; // 'login' or 'register'
+
 let state = {
     currentMonth: new Date().getMonth(),
     currentYear: new Date().getFullYear(),
     habits: [],
-    checks: {},  // { 'YYYY-MM': { 'habitId': { day: true/false } } }
+    checks: {},
     editingHabitId: null,
 };
 
-function generateId() {
-    return 'h' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+// ===== SIMPLE HASH (for localStorage password storage) =====
+function simpleHash(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash |= 0;
+    }
+    return hash.toString(36);
 }
 
-function loadState() {
+// ===== USER MANAGEMENT =====
+function getUsers() {
+    try { return JSON.parse(localStorage.getItem(USERS_KEY)) || {}; } catch { return {}; }
+}
+
+function saveUsers(users) {
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+}
+
+function getUserDataKey(username) {
+    return `habit_data_${username}`;
+}
+
+// ===== AUTH LOGIC =====
+function switchAuthTab(mode) {
+    authMode = mode;
+    document.getElementById('tab-login').classList.toggle('active', mode === 'login');
+    document.getElementById('tab-register').classList.toggle('active', mode === 'register');
+    document.getElementById('auth-submit').textContent = mode === 'login' ? 'Sign In' : 'Create Account';
+    document.getElementById('auth-error').textContent = '';
+}
+
+function handleAuth() {
+    const username = document.getElementById('auth-username').value.trim().toLowerCase();
+    const password = document.getElementById('auth-password').value;
+    const errorEl = document.getElementById('auth-error');
+
+    if (!username || username.length < 3) {
+        errorEl.textContent = 'Username must be at least 3 characters.';
+        return;
+    }
+    if (!password || password.length < 4) {
+        errorEl.textContent = 'Password must be at least 4 characters.';
+        return;
+    }
+
+    const users = getUsers();
+    const hashed = simpleHash(password);
+
+    if (authMode === 'register') {
+        if (users[username]) {
+            errorEl.textContent = 'Username already taken. Try another.';
+            return;
+        }
+        users[username] = { password: hashed, createdAt: Date.now() };
+        saveUsers(users);
+        // Initialize with default habits for new user
+        const dataKey = getUserDataKey(username);
+        localStorage.setItem(dataKey, JSON.stringify({ habits: DEFAULT_HABITS.map(h => ({...h})), checks: {} }));
+        loginUser(username);
+    } else {
+        if (!users[username]) {
+            errorEl.textContent = 'User not found. Please sign up first.';
+            return;
+        }
+        if (users[username].password !== hashed) {
+            errorEl.textContent = 'Incorrect password. Try again.';
+            return;
+        }
+        loginUser(username);
+    }
+}
+
+function loginUser(username) {
+    currentUser = username;
+    localStorage.setItem(SESSION_KEY, username);
+    loadUserData();
+    showDashboard();
+    renderAll();
+}
+
+function handleLogout() {
+    currentUser = null;
+    localStorage.removeItem(SESSION_KEY);
+    hideDashboard();
+}
+
+function showDashboard() {
+    document.getElementById('login-screen').classList.remove('active');
+    document.getElementById('app-header').classList.add('visible');
+    document.getElementById('main-content').classList.add('visible');
+    // Set user info in header
+    document.getElementById('user-avatar').textContent = currentUser.charAt(0).toUpperCase();
+    document.getElementById('user-name').textContent = currentUser;
+    // Clear auth form
+    document.getElementById('auth-username').value = '';
+    document.getElementById('auth-password').value = '';
+    document.getElementById('auth-error').textContent = '';
+}
+
+function hideDashboard() {
+    document.getElementById('login-screen').classList.add('active');
+    document.getElementById('app-header').classList.remove('visible');
+    document.getElementById('main-content').classList.remove('visible');
+    switchAuthTab('login');
+}
+
+// ===== PARTICLES =====
+function createParticles() {
+    const container = document.getElementById('login-particles');
+    container.innerHTML = '';
+    for (let i = 0; i < 30; i++) {
+        const p = document.createElement('div');
+        p.className = 'login-particle';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.animationDelay = Math.random() * 15 + 's';
+        p.style.animationDuration = (10 + Math.random() * 15) + 's';
+        p.style.width = p.style.height = (2 + Math.random() * 4) + 'px';
+        p.style.opacity = 0.1 + Math.random() * 0.3;
+        container.appendChild(p);
+    }
+}
+
+// ===== USER DATA =====
+function loadUserData() {
+    if (!currentUser) return;
     try {
-        const saved = localStorage.getItem(STORAGE_KEY);
+        const dataKey = getUserDataKey(currentUser);
+        const saved = localStorage.getItem(dataKey);
         if (saved) {
             const parsed = JSON.parse(saved);
             state.habits = parsed.habits || [];
             state.checks = parsed.checks || {};
         } else {
-            state.habits = DEFAULT_HABITS.map(h => ({ ...h }));
+            state.habits = DEFAULT_HABITS.map(h => ({...h}));
+            state.checks = {};
+            saveState();
         }
     } catch {
-        state.habits = DEFAULT_HABITS.map(h => ({ ...h }));
+        state.habits = DEFAULT_HABITS.map(h => ({...h}));
+        state.checks = {};
     }
 }
 
 function saveState() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    if (!currentUser) return;
+    const dataKey = getUserDataKey(currentUser);
+    localStorage.setItem(dataKey, JSON.stringify({
         habits: state.habits,
         checks: state.checks,
     }));
+}
+
+function generateId() {
+    return 'h' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
 }
 
 function getMonthKey() {
@@ -52,10 +188,6 @@ function getMonthKey() {
 
 function getDaysInMonth() {
     return new Date(state.currentYear, state.currentMonth + 1, 0).getDate();
-}
-
-function getFirstDayOfMonth() {
-    return new Date(state.currentYear, state.currentMonth, 1).getDay();
 }
 
 function isChecked(habitId, day) {
@@ -219,7 +351,6 @@ function renderTrackerGrid() {
     const tfoot = document.getElementById('tracker-tfoot');
     const weeks = getWeeks();
 
-    // Build header
     let headerRow1 = `<tr><th class="habit-col" rowspan="2">Habit</th>`;
     let headerRow2 = `<tr>`;
     weeks.forEach(w => {
@@ -234,7 +365,6 @@ function renderTrackerGrid() {
     headerRow2 += `</tr>`;
     thead.innerHTML = headerRow1 + headerRow2;
 
-    // Build body
     tbody.innerHTML = state.habits.map(h => {
         const prog = getHabitProgress(h.id);
         let cells = `<td class="habit-name-cell">
@@ -269,7 +399,6 @@ function renderTrackerGrid() {
         return `<tr>${cells}</tr>`;
     }).join('');
 
-    // Build footer (daily progress)
     let footCells = `<td class="habit-name-cell" style="font-size:0.8rem;color:var(--text-muted);">Daily Progress</td>`;
     weeks.forEach(w => {
         w.days.forEach(d => {
@@ -309,7 +438,6 @@ function handleCheck(habitId, day) {
     renderAll();
 }
 
-// Month nav
 document.getElementById('prev-month').addEventListener('click', () => {
     state.currentMonth--;
     if (state.currentMonth < 0) { state.currentMonth = 11; state.currentYear--; }
@@ -321,7 +449,7 @@ document.getElementById('next-month').addEventListener('click', () => {
     renderAll();
 });
 
-// ===== MODAL LOGIC =====
+// ===== HABIT MODAL =====
 const modalOverlay = document.getElementById('modal-overlay');
 const modalTitle = document.getElementById('modal-title');
 const nameInput = document.getElementById('habit-name-input');
@@ -395,7 +523,6 @@ function closeDeleteModal() {
 function confirmDelete() {
     if (!deletingHabitId) return;
     state.habits = state.habits.filter(h => h.id !== deletingHabitId);
-    // Clean checks
     for (const mk of Object.keys(state.checks)) {
         delete state.checks[mk][deletingHabitId];
     }
@@ -409,11 +536,35 @@ document.getElementById('delete-cancel').addEventListener('click', closeDeleteMo
 document.getElementById('delete-confirm').addEventListener('click', confirmDelete);
 deleteOverlay.addEventListener('click', e => { if (e.target === deleteOverlay) closeDeleteModal(); });
 
-// ===== KEYBOARD SHORTCUT =====
+// ===== KEYBOARD =====
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape') { closeModal(); closeDeleteModal(); }
 });
 
+// Enter key on auth form
+document.getElementById('auth-password').addEventListener('keydown', e => {
+    if (e.key === 'Enter') handleAuth();
+});
+document.getElementById('auth-username').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('auth-password').focus();
+});
+
 // ===== INIT =====
-loadState();
-renderAll();
+createParticles();
+
+// Check for existing session
+const savedSession = localStorage.getItem(SESSION_KEY);
+if (savedSession) {
+    const users = getUsers();
+    if (users[savedSession]) {
+        currentUser = savedSession;
+        loadUserData();
+        showDashboard();
+        renderAll();
+    } else {
+        localStorage.removeItem(SESSION_KEY);
+        hideDashboard();
+    }
+} else {
+    hideDashboard();
+}
