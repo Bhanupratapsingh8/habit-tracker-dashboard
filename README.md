@@ -119,7 +119,8 @@ habit_data_bhanu
 
 ## 📸 Screenshots
 <img width="1915" height="972" alt="image" src="https://github.com/user-attachments/assets/53ea6ed7-a353-4fb8-b2b5-b541bb1282c1" />
-<img width="1919" height="975" alt="image" src="https://github.com/user-attachments/assets/cf8af110-7ed0-436f-9d77-83eb34a29760" />
+<img width="1919" height="972" alt="image" src="https://github.com/user-attachments/assets/69ad660a-fae8-43d7-a341-ace81a914b2c" />
+
 
 
 
